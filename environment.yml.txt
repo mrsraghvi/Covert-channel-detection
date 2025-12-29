@@ -1,0 +1,22 @@
+name: covert
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy=1.26
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - pyarrow
+  - joblib
+  - tqdm
+  - scapy
+  - streamlit
+  - uvicorn
+  - fastapi
+  - ipykernel
+  - pytest
+  - pip
+  - pip:
+      - pyshark
