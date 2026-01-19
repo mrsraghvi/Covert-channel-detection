@@ -1,118 +1,112 @@
 ---
 
-# 🛡️ Covert Channel Detector (Timing-Based IDS)
+# 🚨 Covert Timing Channel Detection System
 
-A **machine learning–powered Intrusion Detection System (IDS)** to detect **covert timing channels** in network traffic using **Inter-Packet Delay (IPD) analysis**, **statistical tests**, and **real-time monitoring**.
-
-This project supports:
-
-* Offline analysis from PCAP / CSV
-* ML-based detection (Random Forest + Isolation Forest)
-* Statistical hypothesis testing
-* **Real-time live traffic detection**
-* **Automatic IP blocking (Windows Firewall / Linux iptables)**
-* Interactive **Streamlit dashboard**
+**Machine Learning–Based Network IDS with Real-Time Detection & Dashboard**
 
 ---
 
-## 📌 Features
+## 📌 Project Overview
 
-* ✅ Covert timing channel detection (ICMP / TCP / UDP)
-* ✅ Feature extraction: IPD, entropy, FFT, autocorrelation
-* ✅ ML models: Random Forest, Isolation Forest
-* ✅ Risk fusion engine (ML + stats + anomaly score)
-* ✅ Real-time packet sniffing using Scapy
-* ✅ Auto-blocking of malicious IPs
-* ✅ Streamlit dashboard with alerts & timeline
-* ✅ Designed for **academic + industry demo**
+Covert timing channels are a stealthy communication technique where attackers encode information in the **timing between network packets**, bypassing traditional security controls.
+
+This project implements a **full-stack Intrusion Detection System (IDS)** that:
+
+* Detects **covert timing channels** using **Inter-Packet Delay (IPD) analysis**
+* Uses **Machine Learning + Statistical tests**
+* Supports **offline PCAP/CSV analysis**
+* Supports **real-time live network traffic detection**
+* Provides a **visual dashboard**
+* Includes **severity levels and optional auto-blocking**
 
 ---
 
-## 🧱 Project Structure
+## 🎯 Key Features
+
+✅ Covert channel simulation (ICMP / TCP timing)
+✅ Packet capture (live + offline)
+✅ IPD preprocessing & flow reconstruction
+✅ Feature extraction (time, entropy, FFT, autocorrelation)
+✅ ML detection (Random Forest + Isolation Forest)
+✅ Statistical detection (KS test, entropy drift)
+✅ **Real-time detection engine**
+✅ **Live alerts with severity levels 🔴🟡🟢**
+✅ **Streamlit dashboard**
+✅ **Optional Windows firewall auto-block (admin only)**
+
+---
+
+## 🧠 Detection Architecture
+
+```
+Sender (Covert Traffic)
+        ↓
+Packet Capture (Live / CSV)
+        ↓
+Flow Reconstruction
+        ↓
+IPD Feature Extraction
+        ↓
+ML + Statistical Models
+        ↓
+Risk Fusion Engine
+        ↓
+Real-Time Alerts + Dashboard
+```
+
+---
+
+## 📁 Project Structure
 
 ```
 covert-channel-detector/
-│
-├── capture/                # Packet capture (CSV / PCAP)
-├── preprocess/             # Flow parsing & cleaning
-├── features/               # Feature extraction logic
-├── models/                 # Trained ML models
-├── stats/                  # Statistical tests (KS, entropy)
-├── fusion/                 # Risk fusion engine
-├── sender/                 # Covert channel traffic generator
-├── live/                   # Real-time detection & logging
-├── dashboard/              # Streamlit dashboard
-├── results/                # ROC curves & plots
+├── sender/                  # Covert channel traffic generator
+├── capture/                 # Live & offline packet capture
+├── preprocess/              # Flow parsing & IPD cleaning
+├── features/                # Feature extraction
+├── models/                  # ML models (RF, Isolation Forest)
+├── stats/                   # Statistical tests
+├── fusion/                  # Risk fusion engine
+├── live/                    # Real-time detector & logger
+├── dashboard/               # Streamlit dashboard
+├── results/                 # ROC curves & plots
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## ⚙️ System Requirements
+## 🛠️ Installation Guide (Windows – Recommended)
 
-### OS
+### 1️⃣ Install Miniconda (Recommended)
 
-* Windows 10 / 11 **(Admin access required for firewall rules)**
-* Linux (optional, iptables supported)
-
-### Software
-
-* Python **3.9 – 3.11**
-* Miniconda / Anaconda (recommended)
-* PowerShell (Windows)
+Download: [https://docs.conda.io/en/latest/miniconda.html](https://docs.conda.io/en/latest/miniconda.html)
 
 ---
 
-## 📦 Installation
-
-### 1️⃣ Clone the repository
-
-```bash
-git clone https://github.com/your-username/covert-channel-detector.git
-cd covert-channel-detector
-```
-
----
-
-### 2️⃣ Create virtual environment
-
-#### Using Conda (Recommended)
+### 2️⃣ Create Conda Environment
 
 ```bash
 conda create -n covert python=3.10 -y
 conda activate covert
 ```
 
-#### OR using venv
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-```
-
 ---
 
-### 3️⃣ Install dependencies
+### 3️⃣ Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
+> If Scapy fails on Windows, run **Terminal as Administrator**
+
 ---
 
-## 📄 Requirements (`requirements.txt`)
+### 4️⃣ Verify Installation
 
-```txt
-scapy
-pandas
-numpy
-scipy
-scikit-learn
-joblib
-matplotlib
-streamlit
-plotly
+```bash
+python -c "import scapy, pandas, sklearn, streamlit; print('OK')"
 ```
 
 ---
@@ -121,40 +115,71 @@ plotly
 
 ---
 
-## 🔹 Phase 1 — Generate Covert Traffic (Test Data)
+## 🔹 Phase 1 — Covert Traffic Generation
+
+### ICMP Covert Channel
 
 ```bash
 python sender/sender_icmp.py 127.0.0.1 10101010 --repeat 10
 ```
 
-✔️ Sends ICMP packets using timing modulation
+---
+
+## 🔹 Phase 2 — Packet Capture
+
+### Live Capture
+
+```bash
+python capture/capture_live.py
+```
+
+### From CSV
+
+```bash
+python capture/capture_from_csv.py sender_output/<file>.csv
+```
 
 ---
 
-## 🔹 Phase 2 — Feature Extraction
+## 🔹 Phase 3 — Preprocessing & Feature Extraction
+
+```bash
+python preprocess/flow_splitter.py capture/capture_xxx.csv
+```
 
 ```bash
 python features/feature_extractor.py \
-preprocessed/flows/10.0.0.1_10.0.0.2_TCP.csv \
-preprocessed/flows/10.0.0.3_10.0.0.4_ICMP.csv \
+preprocessed/flows/normal.csv \
+preprocessed/flows/covert.csv \
 --window 50 --step 25
 ```
 
-✔️ Outputs JSON feature file
-
 ---
 
-## 🔹 Phase 3 — Train Detection Model
+## 🔹 Phase 4 — Train Models
 
 ```bash
-python models/train_model.py features/features_YYYYMMDD_HHMMSS.json
+python models/train_model.py features/features_xxx.json
 ```
 
-✔️ Saves trained model in `models/`
+```bash
+python models/iforest_detect.py features/features_xxx.json
+```
 
 ---
 
-## 🔹 Phase 4 — Real-Time Detection (LIVE IDS)
+## 🔹 Phase 5 — Risk Fusion
+
+```bash
+python fusion/risk_engine.py \
+--features features/features_xxx.json \
+--stats stats_output/stat_features_xxx.json \
+--iforest models/iforest_scores.csv
+```
+
+---
+
+## 🔹 Phase 6 — Real-Time Detection 🔥
 
 ⚠️ **Run terminal as Administrator**
 
@@ -162,27 +187,51 @@ python models/train_model.py features/features_YYYYMMDD_HHMMSS.json
 python -m live.realtime_detector
 ```
 
-You will see output like:
+### Sample Output
 
-```text
-[ALERT] 192.168.1.4_192.168.1.1_17 | risk=72.67
-[BLOCKED] 192.168.1.4 blocked via Windows Firewall
 ```
+[ALERT] 192.168.1.4_192.168.1.1_17 | risk=63.75
+```
+
+Severity Levels:
+
+* 🟢 Normal (< 40)
+* 🟡 Suspicious (40–60)
+* 🔴 Malicious (> 60)
 
 ---
 
-## 🔥 Auto-Blocking (Windows)
+## 📊 Dashboard (Streamlit)
 
-* Uses **Windows Defender Firewall**
-* Automatically blocks IPs with high risk
-
-### View blocked IPs (PowerShell Admin)
-
-```powershell
-Get-NetFirewallRule | Where-Object DisplayName -Like "CovertBlock*"
+```bash
+streamlit run dashboard/app.py
 ```
 
-### Remove a block
+### Dashboard Features
+
+* Live alerts table
+* Severity color coding
+* Protocol filtering (TCP / UDP / ICMP)
+* Attack timeline replay
+* Risk trend visualization
+
+---
+
+## 🛡️ Auto-Blocking (Windows)
+
+> ⚠️ Requires **Administrator PowerShell**
+
+Blocking is implemented using **Windows Firewall rules** (not iptables).
+
+```powershell
+New-NetFirewallRule `
+  -DisplayName "CovertBlock_192.168.1.4" `
+  -Direction Inbound `
+  -RemoteAddress 192.168.1.4 `
+  -Action Block
+```
+
+Remove rule:
 
 ```powershell
 Remove-NetFirewallRule -DisplayName "CovertBlock_192.168.1.4"
@@ -190,56 +239,38 @@ Remove-NetFirewallRule -DisplayName "CovertBlock_192.168.1.4"
 
 ---
 
-## 📊 Dashboard (Alerts & Timeline)
+## 📈 Output Files
 
-```bash
-streamlit run dashboard/app.py
-```
-
-Dashboard features:
-
-* 🔴🟡🟢 Severity-colored alerts
-* Protocol filters (TCP / UDP / ICMP)
-* Attack timeline replay
-* Risk trend graphs
+* `live/alerts.csv` → Real-time alerts
+* `fusion_output/final_risk_report.csv`
+* `results/roc_*.png`
 
 ---
 
-## 🧪 Output Files
+## 🧪 Supported Protocols
 
-| File                    | Description          |
-| ----------------------- | -------------------- |
-| `alerts.csv`            | Real-time alert logs |
-| `rf_detector.joblib`    | ML detection model   |
-| `iforest_scores.csv`    | Anomaly scores       |
-| `final_risk_report.csv` | Fused risk output    |
+* ICMP
+* TCP
+* UDP
+* HTTP / HTTPS (via TCP timing)
+* SSL/TLS (timing-based)
 
 ---
 
-## 🎓 Academic Relevance
+## 📚 Use Cases
 
-This project demonstrates:
-
-* Network security & covert channels
-* Time-series feature engineering
-* Supervised + unsupervised ML
-* IDS architecture
-* Real-time systems design
-
-Perfect for:
-
-* Final year project
-* Cybersecurity internships
-* Research demos
-* Resume / GitHub portfolio
+* Covert channel detection
+* Network intrusion detection
+* Malware research
+* Cybersecurity academic projects
+* SOC monitoring demo
 
 ---
 
 ## ⚠️ Disclaimer
 
-This project is for **educational and defensive security research only**.
-Do **NOT** deploy on networks without permission.
-
+This project is **strictly for educational and research purposes**.
+Do **NOT** use it on networks you do not own or have permission to test.
 
 ---
 
@@ -249,11 +280,10 @@ Do **NOT** deploy on networks without permission.
 Cybersecurity & Machine Learning Enthusiast
 📧 **[mr.sraghvi@gmail.com](mailto:mr.sraghvi@gmail.com)**
 
-
 ---
 
-## ⭐ If You Like This Project
+## ⭐ If you like this project
 
-Please ⭐ star the repository and share!
+Give it a **star ⭐ on GitHub** and feel free to fork!
 
 ---
