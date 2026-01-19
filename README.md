@@ -1,4 +1,3 @@
----
 
 # 🚨 Covert Timing Channel Detection System
 
