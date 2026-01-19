@@ -1,90 +1,99 @@
 # features/feature_extractor.py
-"""
-Extracts statistical features from flows:
- - mean, std, median, min/max IPD
- - entropy
- - autocorrelation
-Outputs JSON feature file.
-"""
-import os
-import json
 import argparse
+import json
+import os
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from scipy.stats import entropy
 
-OUT_DIR = "features"
+from feature_utils import (
+    fft_features,
+    autocorr_features,
+    entropy_features
+)
 
-def ensure_dir():
-    os.makedirs(OUT_DIR, exist_ok=True)
+# =========================================================
+# Basic Statistical Features
+# =========================================================
+def basic_features(ipd):
+    return {
+        "ipd_mean": float(np.mean(ipd)),
+        "ipd_std": float(np.std(ipd)),
+        "ipd_min": float(np.min(ipd)),
+        "ipd_max": float(np.max(ipd)),
+        "ipd_median": float(np.median(ipd)),
+        "ipd_iqr": float(np.percentile(ipd, 75) - np.percentile(ipd, 25))
+    }
 
-def entropy_ipd(arr, bins=16):
-    arr = np.array(arr)
-    arr = arr[arr > 0]
-    if len(arr) == 0:
-        return 0.0
-
-    hist, _ = np.histogram(arr, bins=bins, density=True)
-    hist = hist + 1e-12
-    return float(entropy(hist))
-
-def autocorr(arr):
-    arr = np.array(arr)
-    if len(arr) < 2:
-        return 0.0
-    return float(np.corrcoef(arr[:-1], arr[1:])[0, 1])
-
-def extract_windows(ipds, window, step):
+# =========================================================
+# Feature Extraction Per Window
+# =========================================================
+def extract_window_features(df, window_size, step_size, flow_name):
     features = []
-    for start in range(0, len(ipds), step):
-        end = start + window
-        win = ipds[start:end]
-        if len(win) == 0:
-            break
 
-        f = {
-            "mean_ipd": float(np.mean(win)),
-            "std_ipd": float(np.std(win)),
-            "median_ipd": float(np.median(win)),
-            "max_ipd": float(np.max(win)),
-            "min_ipd": float(np.min(win)),
-            "entropy_ipd": entropy_ipd(win),
-            "autocorr": autocorr(win),
-            "pkt_count": len(win)
+    ipd = df["ipd"].values
+
+    for start in range(0, len(ipd) - window_size + 1, step_size):
+        end = start + window_size
+        ipd_window = ipd[start:end]
+
+        feat = {
+            "flow": flow_name,
+            "window_start": start,
+            "window_end": end
         }
-        features.append(f)
 
-        if end >= len(ipds):
-            break
+        # Basic stats
+        feat.update(basic_features(ipd_window))
+
+        # Advanced features (PHASE 1)
+        feat.update(fft_features(ipd_window))
+        feat.update(autocorr_features(ipd_window))
+        feat.update(entropy_features(ipd_window))
+
+        features.append(feat)
+
     return features
 
-def process_flow(flow_csv, window=50, step=25):
-    df = pd.read_csv(flow_csv)
-    ipds = df["ipd"].values
-    feats = extract_windows(ipds, window, step)
+# =========================================================
+# Main
+# =========================================================
+def main():
+    parser = argparse.ArgumentParser(description="Extract IPD-based features")
+    parser.add_argument("flow_files", nargs="+", help="CSV flow files")
+    parser.add_argument("--window", type=int, default=50, help="Window size")
+    parser.add_argument("--step", type=int, default=25, help="Step size")
+    args = parser.parse_args()
 
-    for f in feats:
-        f["flow"] = os.path.basename(flow_csv)
+    all_features = []
 
-    return feats
+    for flow_file in args.flow_files:
+        df = pd.read_csv(flow_file)
 
-def main(args):
-    ensure_dir()
+        if "ipd" not in df.columns:
+            raise ValueError(f"'ipd' column missing in {flow_file}")
 
-    all_feats = []
-    for f in args.flows:
-        all_feats.extend(process_flow(f, args.window, args.step))
+        flow_name = os.path.basename(flow_file).replace(".csv", "")
+        feats = extract_window_features(
+            df,
+            window_size=args.window,
+            step_size=args.step,
+            flow_name=flow_name
+        )
+        all_features.extend(feats)
 
-    out_json = os.path.join(OUT_DIR, f"features_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.json")
-    with open(out_json, "w") as fh:
-        json.dump(all_feats, fh, indent=2)
+    if not all_features:
+        raise RuntimeError("No features extracted")
 
-    print(f"[+] Extracted {len(all_feats)} windows → {out_json}")
+    os.makedirs("features", exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = f"features/features_{ts}.json"
+
+    with open(out_path, "w") as f:
+        json.dump(all_features, f, indent=2)
+
+    print(f"[+] Extracted {len(all_features)} windows → {out_path}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("flows", nargs="+")
-    parser.add_argument("--window", type=int, default=50)
-    parser.add_argument("--step", type=int, default=25)
-    args = parser.parse_args()
-    main(args)
+    main()
