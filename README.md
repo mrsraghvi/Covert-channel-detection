@@ -1,6 +1,4 @@
 
-
-````
 # 🚨 Covert Timing Channel Detection System
 
 **Machine Learning–Based Network Intrusion Detection System (IDS)**  
