@@ -134,11 +134,6 @@ streamlit run dashboard/app.py
 * Top suspicious flows
 * Manual IP block/unblock controls
 
-Dashboard URL:
-
-```text
-http://localhost:8501
-```
 
 ---
 
@@ -205,8 +200,3 @@ Do **not** deploy on networks without explicit authorization.
 
 MIT License — Free for academic and research use.
 
-```
-
-
-Say the word 👍
-```
